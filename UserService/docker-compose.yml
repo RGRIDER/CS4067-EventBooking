@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  user-service:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    networks:
+      - mynetwork
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2016
+      POSTGRES_DB: userdb
+    networks:
+      - mynetwork
+    hostname: localhost
+
+volumes:
+  pgdata:
+
+networks:
+  mynetwork:

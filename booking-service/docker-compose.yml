@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  booking-service:
+    build: .
+    ports:
+      - "5002:5002"
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://postgres:2016@postgres-db:5432/userdb
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2016
+      POSTGRES_DB: userdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # RabbitMQ management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+volumes:
+  pgdata:

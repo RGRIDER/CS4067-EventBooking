@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq_dev  # Changed container name to avoid conflict
+    ports:
+      - "5673:5672"   # RabbitMQ default port
+      - "15673:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: always
+
+  booking-service:
+    build:
+      context: .  # Use current directory since your Dockerfile is in booking-service
+      dockerfile: Dockerfile
+    container_name: booking-service
+    depends_on:
+      - rabbitmq
+      - postgres
+    environment:
+      - DATABASE_URL=postgres://postgres:2016@postgres:5432/userdb
+      - RABBITMQ_URL=amqp://rabbitmq_dev  # Updated to match new RabbitMQ container name
+    restart: always
+    ports:
+      - "5008:5008"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  notification-service:
+    build:
+      context: ../notification-service  # Correct the path to notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    depends_on:
+      - booking-service
+      - rabbitmq
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq_dev  # Updated to match new RabbitMQ container name
+    restart: always
+    ports:
+      - "5003:5003"
+
+  postgres:
+    image: "postgres:latest"
+    container_name: postgres
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2016
+      POSTGRES_DB: userdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
